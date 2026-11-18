@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<meta name="robots" content="noindex,nofollow">
+<title>Painel – Gerador de códigos</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--brand:#7c3aed;--brand-soft:#ede9fe;--ok:#059669;--ok-soft:#d1fae5;--err:#e11d48;--err-soft:#ffe4e6;--warn:#d97706;--warn-soft:#fef3c7;--shadow:0 1px 3px rgba(15,23,42,.08),0 4px 14px rgba(15,23,42,.05)}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1220;--card:#131c2e;--text:#e5edf7;--muted:#94a3b8;--line:#243049;--brand:#a78bfa;--brand-soft:#251c45;--ok:#34d399;--ok-soft:#08302a;--err:#fb7185;--err-soft:#3a1420;--warn:#fbbf24;--warn-soft:#3a2a0a;--shadow:none}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.45}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.wrap{max-width:680px;margin:0 auto;padding-bottom:40px}
+.top{padding:calc(env(safe-area-inset-top,0px) + 20px) 20px 22px;background:linear-gradient(135deg,#7c3aed,#4f46e5 70%,#2563eb);color:#fff;border-radius:0 0 26px 26px;box-shadow:0 6px 20px rgba(79,70,229,.3);display:flex;gap:14px;align-items:center}
+.top .ic{width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:26px;flex-shrink:0}
+.top h1{margin:0;font-size:21px}.top p{margin:2px 0 0;opacity:.85;font-size:13px}
+.body{padding:16px}
+h2.sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 4px 9px;font-weight:800}
+h2.sec:first-child{margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:800;color:var(--muted);margin:12px 0 5px;text-transform:uppercase;letter-spacing:.05em}
+label:first-child{margin-top:0}
+input[type=text],input[type=date],input[type=url],textarea{width:100%;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--bg);outline:none;font-size:15px}
+input:focus,textarea:focus{border-color:var(--brand)}
+input.id{font-family:ui-monospace,Menlo,monospace;font-size:20px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+textarea{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;min-height:96px;resize:vertical}
+.btn{display:block;width:100%;padding:13px;border-radius:14px;font-weight:800;font-size:15px;text-align:center;text-decoration:none;margin-top:10px;background:var(--brand);color:#fff}
+.btn.soft{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.btn.wa{background:#16a34a}
+.btn.sm{padding:9px;font-size:13.5px;margin-top:0}
+.btn:disabled{opacity:.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.checks{display:grid;gap:8px}
+.ck{display:flex;align-items:center;gap:11px;padding:11px 12px;margin:0;border:2px solid var(--line);border-radius:14px;cursor:pointer;font-weight:700;font-size:15px;color:var(--text);text-transform:none;letter-spacing:0}
+.ck input{width:20px;height:20px;accent-color:#7c3aed}
+.ck.on{border-color:var(--brand);background:var(--brand-soft)}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.chips button{padding:7px 12px;border-radius:99px;background:var(--bg);border:1px solid var(--line);font-size:13px;font-weight:700;color:var(--muted)}
+.msg{margin-top:10px;font-size:14px;font-weight:700;border-radius:12px;padding:10px 12px}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}.msg.err{background:var(--err-soft);color:var(--err)}.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.hidden{display:none!important}
+.status{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.pill{font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.no{background:var(--err-soft);color:var(--err)}.pill.exp{background:var(--warn-soft);color:var(--warn)}
+.h{border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px;background:var(--card)}
+.h b{font-size:15px}.h small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.h .acts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.empty{text-align:center;color:var(--muted);padding:22px 8px;font-size:14px}
+details summary{cursor:pointer;font-weight:800;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="ic">🛡️</div><div><h1>Painel de acessos</h1><p>Gere códigos de liberação · uso exclusivo do administrador</p></div></header>
+
+  <div class="body">
+    <h2 class="sec">1 · Chave de assinatura</h2>
+    <div class="card" id="keycard"></div>
+
+    <h2 class="sec">2 · Gerar código</h2>
+    <div class="card">
+      <label>Nome da pessoa (opcional, só para o seu controle)</label>
+      <input type="text" id="nome" placeholder="Ex.: Maria – turma de Farmácia" autocomplete="off">
+      <label>ID do aparelho (a pessoa te envia)</label>
+      <input type="text" id="did" class="id" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" spellcheck="false">
+      <label>Módulos liberados</label>
+      <div class="checks" id="mods"></div>
+      <label>Válido até</label>
+      <input type="date" id="exp" value="2026-12-31">
+      <div class="chips">
+        <button data-q="2026-12-31">31/12/2026</button>
+        <button data-d="30">+30 dias</button>
+        <button data-d="90">+90 dias</button>
+        <button data-d="365">+1 ano</button>
+      </div>
+      <div class="msg hidden" id="gmsg"></div>
+      <button class="btn" id="gen">🔑 Gerar código</button>
+    </div>
+
+    <div class="card hidden" id="out">
+      <b>✅ Código gerado</b>
+      <div id="outinfo" style="font-size:13.5px;color:var(--muted);margin:4px 0 8px"></div>
+      <label>Código</label>
+      <textarea id="code" readonly></textarea>
+      <button class="btn soft sm" id="cpcode" style="margin-top:8px">Copiar código</button>
+      <label>Link de ativação (a pessoa só abre e já ativa)</label>
+      <textarea id="link" readonly style="min-height:70px"></textarea>
+      <div class="row2" style="margin-top:8px"><button class="btn soft sm" id="cplink">Copiar link</button><a class="btn wa sm" id="wa" target="_blank" rel="noopener">Enviar no WhatsApp</a></div>
+    </div>
+
+    <h2 class="sec">Endereço do portal</h2>
+    <div class="card">
+      <label>Link do seu site (para montar o link de ativação)</label>
+      <input type="url" id="site" placeholder="https://seuusuario.github.io/estudos/" autocomplete="off">
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Fica salvo neste navegador. Sem ele, o painel gera só o código.</p>
+    </div>
+
+    <h2 class="sec">Histórico de códigos</h2>
+    <div id="hist"></div>
+    <div class="row2" id="histacts" style="margin-top:6px">
+      <button class="btn soft sm" id="exp-h">Exportar histórico</button>
+      <button class="btn soft sm" id="clr-h">Limpar histórico</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin:14px 4px 0">⚠️ Códigos antigos não podem ser cancelados: eles só deixam de valer na data de validade. Por isso prefira validades curtas.</p>
+  </div>
+</div>
+
+<script src="modulos.js"></script>
+<script>
+const LISTA=window.FF_MODULOS||[];
+const MODS=Object.fromEntries(LISTA.map(m=>[m.id,m.nome]));
+const EMOJI=Object.fromEntries(LISTA.map(m=>[m.id,m.emoji]));
+const SEM=Object.fromEntries(LISTA.map(m=>[m.id,m.semestre||""]));
+const LS={key:"pp_key",hist:"pp_hist",site:"pp_site"};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const get=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+const set=(k,v)=>{try{localStorage.setItem(k,v);return true;}catch(e){return false;}};
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const br=s=>{const p=s.split("-");return p[2]+"/"+p[1]+"/"+p[0];};
+const b64u=buf=>{let s="";new Uint8Array(buf).forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");};
+const strB64u=str=>b64u(new TextEncoder().encode(str));
+let privKey=null, last=null;
+
+/* ---------- chave ---------- */
+async function loadKey(){
+  privKey=null; const raw=get(LS.key); if(!raw) return false;
+  try{
+    const j=JSON.parse(raw), jwk=j.private||j;
+    privKey=await crypto.subtle.importKey("jwk",jwk,{name:"ECDSA",namedCurve:"P-256"},false,["sign"]);
+    return true;
+  }catch(e){ return false; }
+}
+async function renderKey(){
+  const ok=await loadKey(), c=$("keycard");
+  if(ok){
+    c.innerHTML=`<div class="status"><span><b>Chave carregada</b><br><small style="color:var(--muted)">Pronto para gerar códigos neste navegador.</small></span><span class="pill ok">✅ OK</span></div>
+     <button class="btn soft sm" id="rmkey" style="margin-top:10px">Remover chave deste navegador</button>`;
+    $("rmkey").onclick=()=>{ if(confirm("Remover a chave deste navegador? Você poderá carregar de novo com o arquivo chave-privada.json.")){ try{localStorage.removeItem(LS.key);}catch(e){} renderKey(); } };
+  } else {
+    c.innerHTML=`<div class="status"><span><b>Carregue sua chave</b><br><small style="color:var(--muted)">Escolha o arquivo <span class="mono">chave-privada.json</span> (só na primeira vez).</small></span><span class="pill no">🔑 Falta</span></div>
+     <input type="file" id="kfile" accept=".json,application/json" style="margin-top:10px;width:100%">
+     <details style="margin-top:10px"><summary>Ou cole o conteúdo do arquivo</summary><textarea id="ktxt" placeholder='{"private":{...}}' style="margin-top:8px"></textarea><button class="btn soft sm" id="kpaste" style="margin-top:8px">Usar chave colada</button></details>
+     <div class="msg err hidden" id="kmsg"></div>`;
+    const take=async txt=>{ set(LS.key,txt); if(await loadKey()) renderKey(); else { try{localStorage.removeItem(LS.key);}catch(e){} const m=$("kmsg"); m.classList.remove("hidden"); m.textContent="Arquivo de chave inválido."; } };
+    $("kfile").onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>take(String(r.result)); r.readAsText(f); };
+    $("kpaste").onclick=()=>take($("ktxt").value);
+  }
+}
+
+/* ---------- formulário ---------- */
+function renderMods(sel){
+  $("mods").innerHTML=Object.entries(MODS).map(([k,n])=>`<label class="ck ${sel.includes(k)?"on":""}"><input type="checkbox" value="${k}" ${sel.includes(k)?"checked":""}> ${EMOJI[k]||"📦"} ${n}${SEM[k]?` <small style="color:var(--muted);font-weight:700">· ${SEM[k]}</small>`:""}</label>`).join("");
+  $("mods").querySelectorAll("input").forEach(i=>i.onchange=()=>i.parentElement.classList.toggle("on",i.checked));
+}
+const selMods=()=>[...$("mods").querySelectorAll("input:checked")].map(i=>i.value);
+function normId(s){return String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");}
+$("did").oninput=e=>{ const v=normId(e.target.value).slice(0,8); e.target.value=v.length>4?v.slice(0,4)+"-"+v.slice(4):v; };
+document.querySelectorAll(".chips button").forEach(b=>b.onclick=()=>{
+  if(b.dataset.q){ $("exp").value=b.dataset.q; }
+  else { const d=new Date(); d.setDate(d.getDate()+(+b.dataset.d)); $("exp").value=ymd(d); }
+});
+function msg(t,type){ const m=$("gmsg"); m.className="msg "+type; m.textContent=t; }
+
+function siteBase(){
+  let u=($("site").value||"").trim(); if(!u) return "";
+  u=u.split("#")[0].split("?")[0]; if(!/\.html?$/i.test(u)&&!u.endsWith("/")) u+="/"; return u;
+}
+
+async function generate(){
+  if(!privKey){ msg("Carregue a chave de assinatura primeiro (passo 1).","err"); return; }
+  const id=normId($("did").value), exp=$("exp").value, mods=selMods();
+  if(id.length!==8){ msg("O ID do aparelho precisa ter 8 caracteres (ex.: K7F2-9QXA).","err"); return; }
+  if(!/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/.test(id)){ msg("O ID tem caracteres inválidos. Confira se não confundiu 0/O ou 1/I/L.","err"); return; }
+  if(!exp){ msg("Escolha a data de validade.","err"); return; }
+  if(!mods.length){ msg("Marque pelo menos um módulo.","err"); return; }
+  if(exp<ymd(new Date())){ msg("Essa data já passou. O código nasceria expirado.","err"); return; }
+  const payload=strB64u(JSON.stringify({d:id,e:exp,m:mods}));
+  const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},privKey,new TextEncoder().encode(payload));
+  const code="FF1."+payload+"."+b64u(sig);
+  const nome=$("nome").value.trim();
+  last={code,id,exp,mods,nome,at:ymd(new Date())};
+  const h=JSON.parse(get(LS.hist)||"[]"); h.unshift(last); set(LS.hist,JSON.stringify(h.slice(0,300)));
+  $("gmsg").className="msg hidden";
+  showOut(last); renderHist();
+}
+function linkFor(code){ const b=siteBase(); return b?b+"#ativar="+code:""; }
+function waText(e,link){
+  const mods=e.mods.map(m=>MODS[m]).join(" e ");
+  return `Olá${e.nome?" "+e.nome.split(" ")[0]:""}! Seu acesso ao ${mods} foi liberado até ${br(e.exp)}.\n\n`+
+   (link?`Abra este link para ativar:\n${link}\n\nSe preferir, cole este código no app:\n${e.code}`:`Cole este código no app:\n${e.code}`);
+}
+function showOut(e){
+  const link=linkFor(e.code);
+  $("out").classList.remove("hidden");
+  $("outinfo").textContent=`${e.nome?e.nome+" · ":""}ID ${e.id.slice(0,4)}-${e.id.slice(4)} · ${e.mods.map(m=>MODS[m]).join(" + ")} · até ${br(e.exp)}`;
+  $("code").value=e.code; $("link").value=link||"(preencha o endereço do portal para gerar o link)";
+  $("wa").href="https://wa.me/?text="+encodeURIComponent(waText(e,link));
+  $("cpcode").onclick=function(){cp(e.code,this);}; $("cplink").onclick=function(){cp(link||e.code,this);};
+  $("out").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function cp(t,btn){
+  const ok=()=>{const o=btn.textContent;btn.textContent="✓ Copiado!";setTimeout(()=>btn.textContent=o,1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok,fb); else fb();
+  function fb(){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();try{document.execCommand("copy");ok();}catch(e){}document.body.removeChild(x);}
+}
+$("gen").onclick=generate;
+
+/* ---------- histórico ---------- */
+function renderHist(){
+  const h=JSON.parse(get(LS.hist)||"[]"), td=ymd(new Date());
+  $("histacts").classList.toggle("hidden",!h.length);
+  if(!h.length){ $("hist").innerHTML=`<div class="card empty">Nenhum código gerado ainda.</div>`; return; }
+  $("hist").innerHTML=h.map((e,i)=>{
+    const act=e.exp>=td;
+    return `<div class="h"><div class="status"><b>${esc(e.nome||"Sem nome")}</b><span class="pill ${act?"ok":"exp"}">${act?"Ativo":"Expirado"}</span></div>
+     <small><span class="mono">${e.id.slice(0,4)}-${e.id.slice(4)}</span> · ${e.mods.map(m=>MODS[m]).join(" + ")}</small>
+     <small>Válido até ${br(e.exp)} · gerado em ${br(e.at)}</small>
+     <div class="acts"><button class="btn soft sm" data-a="cp" data-i="${i}">Copiar</button><button class="btn soft sm" data-a="re" data-i="${i}">Renovar</button><button class="btn soft sm" data-a="rm" data-i="${i}">Excluir</button></div></div>`;
+  }).join("");
+  $("hist").querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
+    const h2=JSON.parse(get(LS.hist)||"[]"), e=h2[+b.dataset.i];
+    if(b.dataset.a==="cp"){ showOut(e); }
+    if(b.dataset.a==="re"){ $("nome").value=e.nome||""; $("did").value=e.id.slice(0,4)+"-"+e.id.slice(4); renderMods(e.mods); $("exp").value="2026-12-31"; window.scrollTo({top:document.querySelector("#nome").offsetTop-40,behavior:"smooth"}); msg("Dados preenchidos. Ajuste a validade e gere o novo código.","warn"); }
+    if(b.dataset.a==="rm"){ if(confirm("Excluir do histórico? (O código continua valendo até a data.)")){ h2.splice(+b.dataset.i,1); set(LS.hist,JSON.stringify(h2)); renderHist(); } }
+  });
+}
+$("exp-h").onclick=()=>{
+  const blob=new Blob([get(LS.hist)||"[]"],{type:"application/json"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="historico-codigos.json"; a.click();
+};
+$("clr-h").onclick=()=>{ if(confirm("Limpar todo o histórico deste painel?")){ set(LS.hist,"[]"); renderHist(); } };
+$("site").value=get(LS.site)||""; $("site").onchange=()=>{ set(LS.site,$("site").value.trim()); if(last) showOut(last); };
+
+/* ---------- início ---------- */
+renderMods(Object.keys(MODS));
+if(!LISTA.length){ $("mods").innerHTML=`<div class="msg err">Arquivo modulos.js não encontrado ao lado do painel.html.</div>`; }
+if(!window.crypto||!crypto.subtle){ $("keycard").innerHTML=`<div class="msg err">Este navegador não suporta a assinatura. Abra o painel no Chrome (arquivo local ou https).</div>`; }
+else renderKey();
+renderHist();
+</script>
+</body>
+</html>
