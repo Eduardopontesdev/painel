@@ -70,6 +70,7 @@ details summary{cursor:pointer;font-weight:800;font-size:14px}
       <input type="text" id="did" class="id" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" spellcheck="false">
       <label>Módulos liberados</label>
       <div class="checks" id="mods"></div>
+      <label class="ck" id="starck" style="margin-top:8px"><input type="checkbox" id="star"> ⭐ Todos os módulos, inclusive os que eu criar depois</label>
       <label>Válido até</label>
       <input type="date" id="exp" value="2026-12-31">
       <div class="chips">
@@ -78,6 +79,7 @@ details summary{cursor:pointer;font-weight:800;font-size:14px}
         <button data-d="90">+90 dias</button>
         <button data-d="365">+1 ano</button>
       </div>
+      <label class="ck on" id="listack" style="margin-top:12px"><input type="checkbox" id="lista" checked> 🌐 Incluir na lista online (libera módulos novos sem a pessoa digitar outro código)</label>
       <div class="msg hidden" id="gmsg"></div>
       <button class="btn" id="gen">🔑 Gerar código</button>
     </div>
@@ -100,13 +102,27 @@ details summary{cursor:pointer;font-weight:800;font-size:14px}
       <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Fica salvo neste navegador. Sem ele, o painel gera só o código.</p>
     </div>
 
-    <h2 class="sec">Histórico de códigos</h2>
+    <h2 class="sec">3 · Lista online (liberação automática)</h2>
+    <div class="card">
+      <div class="status"><b>acessos.json</b><span class="pill ok" id="pubcount">0 ativos</span></div>
+      <p style="font-size:13.5px;color:var(--muted);margin:6px 0 0">Reúne todos os acessos marcados com 🌐. Os apps consultam esse arquivo sozinhos: quando você libera um módulo novo para alguém, ele aparece para a pessoa sem novo código.</p>
+      <button class="btn" id="pub">📤 Gerar acessos.json</button>
+      <div class="msg hidden" id="pmsg"></div>
+      <details style="margin-top:10px"><summary>Como publicar</summary>
+        <ol style="font-size:13.5px;color:var(--muted);padding-left:20px;margin:8px 0 0">
+          <li>Toque em <b>Gerar acessos.json</b> (baixa o arquivo).</li>
+          <li>No GitHub, abra o repositório do portal e envie esse arquivo na raiz, <b>substituindo</b> o antigo.</li>
+          <li>Em poucos minutos os apps das pessoas atualizam sozinhos (precisam abrir com internet).</li>
+        </ol></details>
+    </div>
+
+    <h2 class="sec">Histórico de acessos</h2>
     <div id="hist"></div>
     <div class="row2" id="histacts" style="margin-top:6px">
       <button class="btn soft sm" id="exp-h">Exportar histórico</button>
       <button class="btn soft sm" id="clr-h">Limpar histórico</button>
     </div>
-    <p style="font-size:12.5px;color:var(--muted);margin:14px 4px 0">⚠️ Códigos antigos não podem ser cancelados: eles só deixam de valer na data de validade. Por isso prefira validades curtas.</p>
+    <p style="font-size:12.5px;color:var(--muted);margin:14px 4px 0">⚠️ Um <b>código</b> já enviado não pode ser cancelado: só deixa de valer na data de validade. Para poder <b>revogar</b>, entregue o acesso só pela lista online (🌐), sem enviar o código, e publique o acessos.json de novo depois de excluir a pessoa.</p>
   </div>
 </div>
 
@@ -126,6 +142,13 @@ const br=s=>{const p=s.split("-");return p[2]+"/"+p[1]+"/"+p[0];};
 const b64u=buf=>{let s="";new Uint8Array(buf).forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");};
 const strB64u=str=>b64u(new TextEncoder().encode(str));
 let privKey=null, last=null;
+const modsTxt=(e,sep)=>e.mods==="*"?"Todos os módulos (inclusive futuros)":e.mods.map(m=>MODS[m]||m).join(sep||" + ");
+async function idHash(id){
+  const enc=new TextEncoder();
+  const k=await crypto.subtle.importKey("raw",enc.encode(id),"PBKDF2",false,["deriveBits"]);
+  const bits=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:enc.encode("ff1-acessos"),iterations:100000},k,128);
+  return b64u(bits);
+}
 
 /* ---------- chave ---------- */
 async function loadKey(){
@@ -155,9 +178,17 @@ async function renderKey(){
 
 /* ---------- formulário ---------- */
 function renderMods(sel){
+  if(sel==="*"){ $("star").checked=true; sel=[]; }
   $("mods").innerHTML=Object.entries(MODS).map(([k,n])=>`<label class="ck ${sel.includes(k)?"on":""}"><input type="checkbox" value="${k}" ${sel.includes(k)?"checked":""}> ${EMOJI[k]||"📦"} ${n}${SEM[k]?` <small style="color:var(--muted);font-weight:700">· ${SEM[k]}</small>`:""}</label>`).join("");
   $("mods").querySelectorAll("input").forEach(i=>i.onchange=()=>i.parentElement.classList.toggle("on",i.checked));
+  syncStar();
 }
+function syncStar(){
+  const s=$("star").checked; $("starck").classList.toggle("on",s);
+  $("mods").querySelectorAll("input").forEach(i=>{ i.disabled=s; i.parentElement.style.opacity=s?".45":"1"; });
+}
+$("star").onchange=syncStar;
+$("lista").onchange=()=>$("listack").classList.toggle("on",$("lista").checked);
 const selMods=()=>[...$("mods").querySelectorAll("input:checked")].map(i=>i.value);
 function normId(s){return String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");}
 $("did").oninput=e=>{ const v=normId(e.target.value).slice(0,8); e.target.value=v.length>4?v.slice(0,4)+"-"+v.slice(4):v; };
@@ -174,31 +205,32 @@ function siteBase(){
 
 async function generate(){
   if(!privKey){ msg("Carregue a chave de assinatura primeiro (passo 1).","err"); return; }
-  const id=normId($("did").value), exp=$("exp").value, mods=selMods();
+  const id=normId($("did").value), exp=$("exp").value, star=$("star").checked, mods=star?"*":selMods();
   if(id.length!==8){ msg("O ID do aparelho precisa ter 8 caracteres (ex.: K7F2-9QXA).","err"); return; }
   if(!/^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{8}$/.test(id)){ msg("O ID tem caracteres inválidos. Confira se não confundiu 0/O ou 1/I/L.","err"); return; }
   if(!exp){ msg("Escolha a data de validade.","err"); return; }
-  if(!mods.length){ msg("Marque pelo menos um módulo.","err"); return; }
+  if(!star&&!mods.length){ msg("Marque pelo menos um módulo (ou \"Todos\").","err"); return; }
   if(exp<ymd(new Date())){ msg("Essa data já passou. O código nasceria expirado.","err"); return; }
   const payload=strB64u(JSON.stringify({d:id,e:exp,m:mods}));
   const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},privKey,new TextEncoder().encode(payload));
   const code="FF1."+payload+"."+b64u(sig);
   const nome=$("nome").value.trim();
-  last={code,id,exp,mods,nome,at:ymd(new Date())};
+  const lista=$("lista").checked, idh=await idHash(id);
+  last={code,id,exp,mods,nome,at:ymd(new Date()),lista,h:idh};
   const h=JSON.parse(get(LS.hist)||"[]"); h.unshift(last); set(LS.hist,JSON.stringify(h.slice(0,300)));
   $("gmsg").className="msg hidden";
-  showOut(last); renderHist();
+  showOut(last); renderHist(); renderPub();
 }
 function linkFor(code){ const b=siteBase(); return b?b+"#ativar="+code:""; }
 function waText(e,link){
-  const mods=e.mods.map(m=>MODS[m]).join(" e ");
+  const mods=modsTxt(e," e ");
   return `Olá${e.nome?" "+e.nome.split(" ")[0]:""}! Seu acesso ao ${mods} foi liberado até ${br(e.exp)}.\n\n`+
    (link?`Abra este link para ativar:\n${link}\n\nSe preferir, cole este código no app:\n${e.code}`:`Cole este código no app:\n${e.code}`);
 }
 function showOut(e){
   const link=linkFor(e.code);
   $("out").classList.remove("hidden");
-  $("outinfo").textContent=`${e.nome?e.nome+" · ":""}ID ${e.id.slice(0,4)}-${e.id.slice(4)} · ${e.mods.map(m=>MODS[m]).join(" + ")} · até ${br(e.exp)}`;
+  $("outinfo").textContent=`${e.nome?e.nome+" · ":""}ID ${e.id.slice(0,4)}-${e.id.slice(4)} · ${modsTxt(e)} · até ${br(e.exp)}`;
   $("code").value=e.code; $("link").value=link||"(preencha o endereço do portal para gerar o link)";
   $("wa").href="https://wa.me/?text="+encodeURIComponent(waText(e,link));
   $("cpcode").onclick=function(){cp(e.code,this);}; $("cplink").onclick=function(){cp(link||e.code,this);};
@@ -219,17 +251,39 @@ function renderHist(){
   $("hist").innerHTML=h.map((e,i)=>{
     const act=e.exp>=td;
     return `<div class="h"><div class="status"><b>${esc(e.nome||"Sem nome")}</b><span class="pill ${act?"ok":"exp"}">${act?"Ativo":"Expirado"}</span></div>
-     <small><span class="mono">${e.id.slice(0,4)}-${e.id.slice(4)}</span> · ${e.mods.map(m=>MODS[m]).join(" + ")}</small>
+     <small><span class="mono">${e.id.slice(0,4)}-${e.id.slice(4)}</span> · ${modsTxt(e)}${e.lista===false?"":" · 🌐 na lista"}</small>
      <small>Válido até ${br(e.exp)} · gerado em ${br(e.at)}</small>
      <div class="acts"><button class="btn soft sm" data-a="cp" data-i="${i}">Copiar</button><button class="btn soft sm" data-a="re" data-i="${i}">Renovar</button><button class="btn soft sm" data-a="rm" data-i="${i}">Excluir</button></div></div>`;
   }).join("");
   $("hist").querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
     const h2=JSON.parse(get(LS.hist)||"[]"), e=h2[+b.dataset.i];
     if(b.dataset.a==="cp"){ showOut(e); }
-    if(b.dataset.a==="re"){ $("nome").value=e.nome||""; $("did").value=e.id.slice(0,4)+"-"+e.id.slice(4); renderMods(e.mods); $("exp").value="2026-12-31"; window.scrollTo({top:document.querySelector("#nome").offsetTop-40,behavior:"smooth"}); msg("Dados preenchidos. Ajuste a validade e gere o novo código.","warn"); }
-    if(b.dataset.a==="rm"){ if(confirm("Excluir do histórico? (O código continua valendo até a data.)")){ h2.splice(+b.dataset.i,1); set(LS.hist,JSON.stringify(h2)); renderHist(); } }
+    if(b.dataset.a==="re"){ $("nome").value=e.nome||""; $("did").value=e.id.slice(0,4)+"-"+e.id.slice(4); $("star").checked=false; renderMods(e.mods); $("lista").checked=e.lista!==false; $("listack").classList.toggle("on",$("lista").checked); $("exp").value="2026-12-31"; window.scrollTo({top:document.querySelector("#nome").offsetTop-40,behavior:"smooth"}); msg("Dados preenchidos. Ajuste a validade e gere o novo código.","warn"); }
+    if(b.dataset.a==="rm"){ if(confirm(e.lista===false?"Excluir do histórico? (O código continua valendo até a data.)":"Excluir? Ele sai da lista online na próxima vez que você gerar e publicar o acessos.json. (Se a pessoa já ativou um código, ele continua valendo até a data.)")){ h2.splice(+b.dataset.i,1); set(LS.hist,JSON.stringify(h2)); renderHist(); renderPub(); } }
   });
 }
+/* ---------- lista online ---------- */
+function activeEntries(){ const td=ymd(new Date()); return JSON.parse(get(LS.hist)||"[]").filter(e=>e.lista!==false&&e.exp>=td); }
+function renderPub(){ $("pubcount").textContent=activeEntries().length+" ativos"; }
+async function exportList(){
+  const pm=$("pmsg");
+  if(!privKey){ pm.className="msg err"; pm.textContent="Carregue a chave de assinatura primeiro (passo 1)."; return; }
+  const all=JSON.parse(get(LS.hist)||"[]"), td=ymd(new Date()); let changed=false; const items=[], seen=new Set();
+  for(const e of all){
+    if(e.lista===false||e.exp<td) continue;
+    if(!e.h){ e.h=await idHash(e.id); changed=true; }
+    const key=e.h+"|"+e.exp+"|"+JSON.stringify(e.mods); if(seen.has(key)) continue; seen.add(key);
+    items.push({h:e.h,e:e.exp,m:e.mods});
+  }
+  if(changed) set(LS.hist,JSON.stringify(all));
+  const payload=strB64u(JSON.stringify({g:td,i:items}));
+  const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},privKey,new TextEncoder().encode(payload));
+  const blob=new Blob([JSON.stringify({v:1,p:payload,s:b64u(sig)})],{type:"application/json"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="acessos.json"; a.click();
+  pm.className="msg ok"; pm.textContent=`acessos.json gerado com ${items.length} acesso(s). Agora envie esse arquivo para a raiz do repositório do portal, substituindo o antigo.`;
+}
+$("pub").onclick=exportList;
+
 $("exp-h").onclick=()=>{
   const blob=new Blob([get(LS.hist)||"[]"],{type:"application/json"}), a=document.createElement("a");
   a.href=URL.createObjectURL(blob); a.download="historico-codigos.json"; a.click();
@@ -242,7 +296,7 @@ renderMods(Object.keys(MODS));
 if(!LISTA.length){ $("mods").innerHTML=`<div class="msg err">Arquivo modulos.js não encontrado ao lado do painel.html.</div>`; }
 if(!window.crypto||!crypto.subtle){ $("keycard").innerHTML=`<div class="msg err">Este navegador não suporta a assinatura. Abra o painel no Chrome (arquivo local ou https).</div>`; }
 else renderKey();
-renderHist();
+renderHist(); renderPub();
 </script>
 </body>
 </html>
