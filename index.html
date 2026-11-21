@@ -68,6 +68,7 @@ details summary{cursor:pointer;font-weight:800;font-size:14px}
       <input type="text" id="nome" placeholder="Ex.: Maria – turma de Farmácia" autocomplete="off">
       <label>ID do aparelho (a pessoa te envia)</label>
       <input type="text" id="did" class="id" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" spellcheck="false">
+      <button class="btn soft sm" id="rid" style="margin-top:8px">🎲 Gerar um ID para esta pessoa</button>
       <label>Módulos liberados</label>
       <div class="checks" id="mods"></div>
       <label class="ck" id="starck" style="margin-top:8px"><input type="checkbox" id="star"> ⭐ Todos os módulos, inclusive os que eu criar depois</label>
@@ -80,6 +81,8 @@ details summary{cursor:pointer;font-weight:800;font-size:14px}
         <button data-d="365">+1 ano</button>
       </div>
       <label class="ck on" id="listack" style="margin-top:12px"><input type="checkbox" id="lista" checked> 🌐 Incluir na lista online (libera módulos novos sem a pessoa digitar outro código)</label>
+      <label class="ck" id="portck" style="margin-top:8px"><input type="checkbox" id="port"> 📲 Código portátil: vale em qualquer aparelho (use quando o ID do iPhone muda a cada abertura)</label>
+      <div class="hint" id="porthint" style="display:none;font-size:12.5px;color:var(--muted);margin:6px 2px 0">Quem tiver o código consegue usar, então envie só para a pessoa e prefira validade curta. Ao colar o código, o aparelho passa a usar o ID escolhido aqui.</div>
       <div class="msg hidden" id="gmsg"></div>
       <button class="btn" id="gen">🔑 Gerar código</button>
     </div>
@@ -189,6 +192,9 @@ function syncStar(){
 }
 $("star").onchange=syncStar;
 $("lista").onchange=()=>$("listack").classList.toggle("on",$("lista").checked);
+function syncPort(){ const on=$("port").checked; $("portck").classList.toggle("on",on); $("porthint").style.display=on?"block":"none"; }
+$("port").onchange=syncPort;
+$("rid").onclick=()=>{ const A="23456789ABCDEFGHJKMNPQRSTUVWXYZ", r=new Uint8Array(8); crypto.getRandomValues(r); let s=""; for(let i=0;i<8;i++) s+=A[r[i]%A.length]; $("did").value=s.slice(0,4)+"-"+s.slice(4); };
 const selMods=()=>[...$("mods").querySelectorAll("input:checked")].map(i=>i.value);
 function normId(s){return String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");}
 $("did").oninput=e=>{ const v=normId(e.target.value).slice(0,8); e.target.value=v.length>4?v.slice(0,4)+"-"+v.slice(4):v; };
@@ -211,12 +217,13 @@ async function generate(){
   if(!exp){ msg("Escolha a data de validade.","err"); return; }
   if(!star&&!mods.length){ msg("Marque pelo menos um módulo (ou \"Todos\").","err"); return; }
   if(exp<ymd(new Date())){ msg("Essa data já passou. O código nasceria expirado.","err"); return; }
-  const payload=strB64u(JSON.stringify({d:id,e:exp,m:mods}));
+  const port=$("port").checked, po={d:id,e:exp,m:mods}; if(port) po.p=1;
+  const payload=strB64u(JSON.stringify(po));
   const sig=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},privKey,new TextEncoder().encode(payload));
   const code="FF1."+payload+"."+b64u(sig);
   const nome=$("nome").value.trim();
   const lista=$("lista").checked, idh=await idHash(id);
-  last={code,id,exp,mods,nome,at:ymd(new Date()),lista,h:idh};
+  last={code,id,exp,mods,nome,at:ymd(new Date()),lista,h:idh,port};
   const h=JSON.parse(get(LS.hist)||"[]"); h.unshift(last); set(LS.hist,JSON.stringify(h.slice(0,300)));
   $("gmsg").className="msg hidden";
   showOut(last); renderHist(); renderPub();
@@ -251,14 +258,14 @@ function renderHist(){
   $("hist").innerHTML=h.map((e,i)=>{
     const act=e.exp>=td;
     return `<div class="h"><div class="status"><b>${esc(e.nome||"Sem nome")}</b><span class="pill ${act?"ok":"exp"}">${act?"Ativo":"Expirado"}</span></div>
-     <small><span class="mono">${e.id.slice(0,4)}-${e.id.slice(4)}</span> · ${modsTxt(e)}${e.lista===false?"":" · 🌐 na lista"}</small>
+     <small><span class="mono">${e.id.slice(0,4)}-${e.id.slice(4)}</span> · ${modsTxt(e)}${e.lista===false?"":" · 🌐 na lista"}${e.port?" · 📲 portátil":""}</small>
      <small>Válido até ${br(e.exp)} · gerado em ${br(e.at)}</small>
      <div class="acts"><button class="btn soft sm" data-a="cp" data-i="${i}">Copiar</button><button class="btn soft sm" data-a="re" data-i="${i}">Renovar</button><button class="btn soft sm" data-a="rm" data-i="${i}">Excluir</button></div></div>`;
   }).join("");
   $("hist").querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
     const h2=JSON.parse(get(LS.hist)||"[]"), e=h2[+b.dataset.i];
     if(b.dataset.a==="cp"){ showOut(e); }
-    if(b.dataset.a==="re"){ $("nome").value=e.nome||""; $("did").value=e.id.slice(0,4)+"-"+e.id.slice(4); $("star").checked=false; renderMods(e.mods); $("lista").checked=e.lista!==false; $("listack").classList.toggle("on",$("lista").checked); $("exp").value="2026-12-31"; window.scrollTo({top:document.querySelector("#nome").offsetTop-40,behavior:"smooth"}); msg("Dados preenchidos. Ajuste a validade e gere o novo código.","warn"); }
+    if(b.dataset.a==="re"){ $("nome").value=e.nome||""; $("did").value=e.id.slice(0,4)+"-"+e.id.slice(4); $("star").checked=false; renderMods(e.mods); $("lista").checked=e.lista!==false; $("port").checked=!!e.port; syncPort(); $("listack").classList.toggle("on",$("lista").checked); $("exp").value="2026-12-31"; window.scrollTo({top:document.querySelector("#nome").offsetTop-40,behavior:"smooth"}); msg("Dados preenchidos. Ajuste a validade e gere o novo código.","warn"); }
     if(b.dataset.a==="rm"){ if(confirm(e.lista===false?"Excluir do histórico? (O código continua valendo até a data.)":"Excluir? Ele sai da lista online na próxima vez que você gerar e publicar o acessos.json. (Se a pessoa já ativou um código, ele continua valendo até a data.)")){ h2.splice(+b.dataset.i,1); set(LS.hist,JSON.stringify(h2)); renderHist(); renderPub(); } }
   });
 }
